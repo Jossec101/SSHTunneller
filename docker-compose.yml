@@ -1,0 +1,38 @@
+version: '3.4'
+
+services:
+  sshtunneller:
+    depends_on: 
+      - sshd_server_test
+    image: jossec101/sshtunneller
+    build:
+      context: .
+    container_name: sshtunneller
+    hostname: sshtunneller
+    ports:
+      - "80:80"
+      - "3306:3306"
+    environment:
+      - ssh_host=sshd_server_test
+      - ssh_port=22
+      - ssh_username=root
+      #- ssh_password=This_Is_a_SSH_P4SSW0RD
+      - ssh_private_key_password=12345
+      - remote_bind_addresses=[('127.0.0.1', 80),('127.0.0.1', 3306)]
+      - local_bind_addresses=[("0.0.0.0", 80),('0.0.0.0', 3306)]
+    volumes: 
+      - ./sshd_server_test/keys:/private.key
+    restart: always
+
+  sshd_server_test:
+
+    image: panubo/sshd_sshtunneller
+    container_name: sshd_server_test
+    hostname: sshd_server_test
+    build:
+      context: ./sshd_server_test
+    ports:
+      - "22:22"
+    environment:
+      SSH_ENABLE_ROOT: "true"
+      TCP_FORWARDING: "true"
