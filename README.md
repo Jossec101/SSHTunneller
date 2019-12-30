@@ -34,7 +34,7 @@ BTW, this amazing art and description has been modified from [SSHTunnel](https:/
 
 The start is pretty simple, let's start with an example:
 
-- Modify the docker-compose provided below:
+Modify the docker-compose provided below:
 ```yaml
 version: '3.4'
 
@@ -57,7 +57,7 @@ services:
     volumes: 
       - ./sshd_server_test/keys:/private.key
     restart: always
-````
+```
 - Set the ssh_host (e.g. ssh.mycompany.com), ssh_port and ssh_username
 - If you are using publickey-based authentication, mount a volume with the private key mapped to the file /private.key in the container and also set the ssh_private_key_password with the passphrase/password of the encrypted private key. ❗❗ *No test has been done* without an encrypted private key.❗❗
 - If you are using password-based authentication, just set the ssh_password environment variable. If you mount a private key file as mentioned before, publickey-based authentication will be prioritized.
