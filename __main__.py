@@ -11,7 +11,7 @@ logging.basicConfig(format='%(asctime)s %(levelname)s %(message)s',
     datefmt='%d/%m/%Y %H:%M:%S',level=logging.INFO)
 
 logger = logging.getLogger()
-logger.setLevel(logging.DEBUG)
+logger.setLevel(logging.INFO)
 
 ### Setup the console handler with a StringIO object
 log_capture_string = io.StringIO()
