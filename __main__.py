@@ -4,7 +4,8 @@ import sys
 import os
 import ast
 import logging
-
+import io
+from contextlib import redirect_stdout
 #Logger
 logging.basicConfig(format='%(asctime)s %(levelname)s %(message)s',
     datefmt='%d/%m/%Y %H:%M:%S',level=logging.INFO)
@@ -32,56 +33,63 @@ def main():
     elif ssh_password is None:
         logging.error("SSH Password not provided, quitting...")
         sys.exit(-1)
-    else:
-        logging.error("No private key nor password provided, quitting...")
-        sys.exit(-1)
 
+    stdout = io.StringIO()
+    with redirect_stdout(stdout):
 
-    if os.path.exists(private_key_dir):
-        try:
-            with open_tunnel(
-            (ssh_host, int(ssh_port)),
-            ssh_username=ssh_username,
-            ssh_pkey=private_key_dir,
-            ssh_private_key_password=ssh_private_key_password,
-            remote_bind_addresses=ast.literal_eval(remote_bind_addresses),
-            local_bind_addresses=ast.literal_eval(local_bind_addresses),
-            set_keepalive=30.0
-            ) as server:
-                logging.info(f"SSH Tunnels established on {ssh_username}@{ssh_host}:  remote_bind_addresses:{remote_bind_addresses}, local_bind_addresses:{local_bind_addresses}")
-                while True:
-                    CheckTunnel(server)
+        if os.path.exists(private_key_dir):
+            try:
+                with open_tunnel(
+                (ssh_host, int(ssh_port)),
+                ssh_username=ssh_username,
+                ssh_pkey=private_key_dir,
+                ssh_private_key_password=ssh_private_key_password,
+                remote_bind_addresses=ast.literal_eval(remote_bind_addresses),
+                local_bind_addresses=ast.literal_eval(local_bind_addresses),
+                set_keepalive=30.0
+                ) as server:
+                    logging.info(f"SSH Tunnels established on {ssh_username}@{ssh_host}:  remote_bind_addresses:{remote_bind_addresses}, local_bind_addresses:{local_bind_addresses}")
+                    while True:
+                        CheckTunnel(server,stdout)
+                
+            except Exception as e:
+                logging.error("SSH Tunnel Failed!")
+                logging.error(e)
             
-        except Exception as e:
-            logging.error("SSH Tunnel Failed!")
-            logging.error(e)
-        
-        finally:
-            logging.warning("SSH Tunnel ended")
-    else:
-        try:
-            with open_tunnel(
-            (ssh_host, int(ssh_port)),
-            ssh_username=ssh_username,
-            ssh_password=ssh_password,
-            remote_bind_addresses=ast.literal_eval(remote_bind_addresses),
-            local_bind_addresses=ast.literal_eval(local_bind_addresses),
-            set_keepalive=30.0
-            ) as server:
-                logging.info(f"SSH Tunnels established on {ssh_username}@{ssh_host}:  remote_bind_addresses:{remote_bind_addresses}, local_bind_addresses:{local_bind_addresses}")
-                while True:
-                    CheckTunnel(server)
+            finally:
+                logging.warning("SSH Tunnel ended")
+        else:
+            try:
+                with open_tunnel(
+                (ssh_host, int(ssh_port)),
+                ssh_username=ssh_username,
+                ssh_password=ssh_password,
+                remote_bind_addresses=ast.literal_eval(remote_bind_addresses),
+                local_bind_addresses=ast.literal_eval(local_bind_addresses),
+                set_keepalive=30.0
+                ) as server:
+                    logging.info(f"SSH Tunnels established on {ssh_username}@{ssh_host}:  remote_bind_addresses:{remote_bind_addresses}, local_bind_addresses:{local_bind_addresses}")
+                    while True:
+                        CheckTunnel(server,stdout)
+                
+            except Exception as e:
+                logging.error("SSH Tunnel Failed!")
+                logging.error(e)
             
-        except Exception as e:
-            logging.error("SSH Tunnel Failed!")
-            logging.error(e)
-        
-        finally:
-            logging.error("SSH Tunnel ended")
-            sys.exit(-2)
-    
+            finally:
+                logging.error("SSH Tunnel ended")
+                sys.exit(-2)
 
-def CheckTunnel(server):
+
+def CheckTunnel(server, stdout):
+    #Check for remote side error from internal modules of Paramiko/SSHTunnel
+    out = stdout.getvalue()
+    logging.info("Checking tunnel")
+    if 'to remote side of the tunnel' in out:
+        logging.error("Problem with remote side, maybe the other side is unavailable, restarting...")
+
+        sys.exit(-2)
+
     server.check_tunnels()
 
     for x in server.tunnel_is_up.values():
