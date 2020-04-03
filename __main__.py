@@ -84,7 +84,7 @@ def main():
 def CheckTunnel(server, stdout):
     #Check for remote side error from internal modules of Paramiko/SSHTunnel
     out = stdout.getvalue()
-    logging.info("Checking tunnel")
+    
     if 'to remote side of the tunnel' in out:
         logging.error("Problem with remote side, maybe the other side is unavailable, restarting...")
 
